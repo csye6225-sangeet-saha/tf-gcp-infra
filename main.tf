@@ -39,4 +39,3 @@ resource "google_compute_route" "webapp_route" {
   dest_range        = "0.0.0.0/0"
   next_hop_gateway  = "default-internet-gateway"  
   depends_on        = [google_compute_subnetwork.webapp_subnet]
-}
