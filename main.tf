@@ -13,6 +13,7 @@ resource "google_compute_network" "test_vpc_network" {
     auto_create_subnetworks = false
     routing_mode            = "REGIONAL"
     mtu                     = 1460
+    delete_default_routes_on_create = true
 }
 
 # Create Subnets
