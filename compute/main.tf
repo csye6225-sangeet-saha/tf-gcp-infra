@@ -14,14 +14,15 @@ variable "subnetwork_name" {
   description = "Subnet name"
 }
 
-resource "google_compute_instance" "instance-20240220-172051" {
+resource "google_compute_instance" "instance-20240221-210326" {
   boot_disk {
     auto_delete = true
-    device_name = "instance-20240220-172051"
+    device_name = "instance-20240221-210326"
 
     initialize_params {
-      image = "projects/csye-6225-001/global/images/mysql-node-custom-image"
-        #put your image name = "projects/csye-6225-001/global/images/mysql-node-custom-image"
+      # image = "projects/debian-cloud/global/images/debian-12-bookworm-v20240213"
+      image = "projects/csye-6225-dev-415015/global/images/mysql-node-custom-image"
+      
       type  = "pd-balanced"
     }
 
@@ -33,8 +34,8 @@ resource "google_compute_instance" "instance-20240220-172051" {
   }
 
   machine_type = "custom-1-1024"
-  name         = "instance-20240220-172051"
-  project      = "csye-6225-001"
+  name         = "instance-20240221-210326"
+  project      = "csye-6225-dev-415015"
 
   network_interface {
     access_config {
@@ -54,7 +55,7 @@ resource "google_compute_instance" "instance-20240220-172051" {
   # }
 
   service_account {
-    email  = "sangeet-csye-6225@csye-6225-001.iam.gserviceaccount.com"
+    email  = "sangeet-dev@csye-6225-dev-415015.iam.gserviceaccount.com"
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 

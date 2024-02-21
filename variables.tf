@@ -1,11 +1,11 @@
 variable "project_id" {
     description = "Google Cloud project ID"
-    default = "csye-6225-001"
+    default = "csye-6225-dev-415015"
 }
 
 variable "credentials_file" {
     description = "Path service account key file"
-    default = "/Users/para/Downloads/csye-6225-001-a4682363897a.json"
+    default = "/Users/para/Downloads/csye-6225-dev-415015-5d28fe9f38ac.json"
 }
 
 variable "region" {
@@ -30,12 +30,12 @@ variable "db_subnet_name"{
 
 variable "webapp_subnet_cidr"{
     description = "CIDR of a new subnet"
-    default     = "10.0.3.0/16"
+    default     = "10.0.3.0/24"
 }
 
 variable "db_subnet_cidr"{
     description = "CIDR of a new subnet"
-    default     = "10.0.4.0/16"
+    default     = "10.0.4.0/24"
 }
 
 variable "routing_mode"{
