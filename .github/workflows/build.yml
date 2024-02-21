@@ -23,3 +23,11 @@ jobs:
 
     - name: Terraform Validate
       run: terraform validate
+
+    - name: Terraform Plan
+      run: terraform plan -out=tfplan
+
+    - name: Terraform Apply
+      run: terraform apply tfplan
+      env:
+        TF_CLI_ARGS: "-auto-approve"
