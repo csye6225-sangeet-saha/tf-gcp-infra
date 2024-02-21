@@ -1,7 +1,7 @@
 
 provider "google" {
-  # credentials = file(var.credentials_file)
-  credentials = var.credentials_file
+  credentials = file(var.credentials_file)
+  # credentials = var.credentials_file
   project     = var.project_id
   region      = var.region
 }
@@ -21,7 +21,7 @@ resource "google_compute_network" "test_vpc_network" {
 
 resource "google_compute_subnetwork" "webapp_subnet" {
   name          = var.webapp_subnet_name
-  ip_cidr_range = "10.0.1.0/24"
+  ip_cidr_range = var.webapp_subnet_cidr
   region        = var.region
   network       = google_compute_network.test_vpc_network.id
   depends_on = [google_compute_network.test_vpc_network]
@@ -29,7 +29,7 @@ resource "google_compute_subnetwork" "webapp_subnet" {
 
 resource "google_compute_subnetwork" "db_subnet" {
   name          = var.db_subnet_name
-  ip_cidr_range = "10.0.2.0/24"
+  ip_cidr_range = var.db_subnet_cidr
   region        = var.region
   network       = google_compute_network.test_vpc_network.id
   depends_on = [google_compute_network.test_vpc_network]

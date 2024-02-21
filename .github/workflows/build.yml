@@ -8,6 +8,8 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    env:
+      CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
 
     steps:
     - name: Checkout repository
@@ -24,14 +26,10 @@ jobs:
     - name: Terraform Validate
       run: terraform validate
 
-    - name: Debug GCP_CREDENTIALS
-      run: echo "GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}"
+    - name: Terraform Plan
+      run: terraform plan -var="credentials_file=${CREDENTIALS}"
 
-
-    # - name: Terraform Plan
-    #   run: terraform plan -var="credentials_file=${{ secrets.GCP_CREDENTIALS }}"
-
-    # - name: Terraform Apply
-    #   run: terraform apply -var="credentials_file=${{ secrets.GCP_CREDENTIALS }}"
-    #   env:
-    #     TF_CLI_ARGS: "-auto-approve"
+    - name: Terraform Apply
+      run: terraform apply -var="credentials_file=${CREDENTIALS}"
+      env:
+        TF_CLI_ARGS: "-auto-approve"

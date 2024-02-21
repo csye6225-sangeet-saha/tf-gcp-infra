@@ -1,11 +1,11 @@
 variable "project_id" {
     description = "Google Cloud project ID"
-    default = "csye-6225-001"
+    default = "csye-6225-dev-415015"
 }
 
 variable "credentials_file" {
     description = "Path service account key file"
-    default = "/Users/para/Downloads/csye-6225-001-a4682363897a.json"
+    default = "/Users/para/Downloads/csye-6225-dev-415015-5d28fe9f38ac.json"
 }
 
 variable "region" {
