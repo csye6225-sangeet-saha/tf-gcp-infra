@@ -25,9 +25,9 @@ jobs:
       run: terraform validate
 
     - name: Terraform Plan
-      run: terraform plan -out=tfplan
+      run: terraform plan -out=tfplan -var="credentials_file=${{ secrets.GCP_CREDENTIALS }}"
 
     - name: Terraform Apply
-      run: terraform apply tfplan
+      run: terraform apply tfplan -var="credentials_file=${{ secrets.GCP_CREDENTIALS }}"
       env:
         TF_CLI_ARGS: "-auto-approve"
