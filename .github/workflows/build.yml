@@ -24,10 +24,14 @@ jobs:
     - name: Terraform Validate
       run: terraform validate
 
-#     - name: Terraform Plan
-#       run: terraform plan -var="credentials_file=${{ secrets.GCP_CREDENTIALS }}"
+    - name: Debug GCP_CREDENTIALS
+      run: echo "GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}"
 
-#     - name: Terraform Apply
-#       run: terraform apply -var="credentials_file=${{ secrets.GCP_CREDENTIALS }}"
-#       env:
-#         TF_CLI_ARGS: "-auto-approve"
+
+    # - name: Terraform Plan
+    #   run: terraform plan -var="credentials_file=${{ secrets.GCP_CREDENTIALS }}"
+
+    # - name: Terraform Apply
+    #   run: terraform apply -var="credentials_file=${{ secrets.GCP_CREDENTIALS }}"
+    #   env:
+    #     TF_CLI_ARGS: "-auto-approve"

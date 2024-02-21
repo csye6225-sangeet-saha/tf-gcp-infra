@@ -64,6 +64,6 @@ resource "google_compute_instance" "instance-20240220-172051" {
   #   enable_vtpm                 = true
   # }
 
-  zone = "us-east4-c"
+  zone = "us-east4-a"
   allow_stopping_for_update = true
 }
