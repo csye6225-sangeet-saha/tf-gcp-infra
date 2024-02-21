@@ -30,12 +30,12 @@ variable "db_subnet_name"{
 
 variable "webapp_subnet_cidr"{
     description = "CIDR of a new subnet"
-    default     = 10.0.3.0/16
+    default     = 10.0.3.0/24
 }
 
 variable "db_subnet_cidr"{
     description = "CIDR of a new subnet"
-    default     = 10.0.4.0/16
+    default     = 10.0.4.0/24
 }
 
 variable "routing_mode"{
