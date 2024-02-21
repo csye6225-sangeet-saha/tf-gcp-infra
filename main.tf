@@ -51,7 +51,7 @@ resource "google_compute_firewall" "webapp_firewall" {
 
   allow {
     protocol = "tcp"
-    ports    = [22]
+    ports    = [22,8080]
   }
 
   depends_on = [google_compute_subnetwork.webapp_subnet]
