@@ -1,7 +1,7 @@
 
 provider "google" {
+  # credentials = file(var.credentials_file)
   credentials = var.credentials_file
-  # credentials = var.credentials_file
   project     = var.project_id
   region      = var.region
 }
@@ -51,7 +51,7 @@ resource "google_compute_firewall" "webapp_firewall" {
 
   allow {
     protocol = "tcp"
-    ports    = [22,8080]
+    ports    = [8080]
   }
 
   depends_on = [google_compute_subnetwork.webapp_subnet]
