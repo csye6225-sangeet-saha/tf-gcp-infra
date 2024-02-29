@@ -43,6 +43,46 @@ variable "routing_mode"{
     default = "REGIONAL"
 }
 
+variable "computeGlobalAddress"{
+    description = "address"
+    default = "10.3.0.5"
+}
+
+#variable for zone
+variable "zone"{
+    description = "zone"
+    default = "us-east4-a"
+}
+
+variable "disk_size"{
+    description = "disk size"
+    default = 10
+}
+
+variable "disk_type"{
+    description = "disk type"
+    default = "PD_SSD"
+}
+
+variable "availability_type"{
+    description = "availability type"
+    default = "REGIONAL"
+}
+
+variable "ipv4_enabled"{
+    description = "ipv4 enabled"
+    default = false
+}
+
+variable "database_version"{
+    description = "database version"
+    default = "MYSQL_5_7"
+}
+
+variable "deletion_protection"{
+    description = "deletion protection"
+    default = false
+}
 
 
 

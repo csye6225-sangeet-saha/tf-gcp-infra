@@ -1,9 +1,21 @@
 
 provider "google" {
-  # credentials = file(var.credentials_file)
-  credentials = var.credentials_file
+  credentials = file(var.credentials_file)
+  # credentials = var.credentials_file
   project     = var.project_id
   region      = var.region
+}
+
+
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+resource "random_string" "user_name" {
+  length           = 16
+  special          = false
 }
 
 # Create VPC
@@ -32,6 +44,7 @@ resource "google_compute_subnetwork" "db_subnet" {
   ip_cidr_range = var.db_subnet_cidr
   region        = var.region
   network       = google_compute_network.test_vpc_network.id
+  private_ip_google_access = true
   depends_on = [google_compute_network.test_vpc_network]
 }
 
@@ -57,9 +70,70 @@ resource "google_compute_firewall" "webapp_firewall" {
   depends_on = [google_compute_subnetwork.webapp_subnet]
 }
 
+resource "google_compute_global_address" "default" {
+  project      = google_compute_network.test_vpc_network.project
+  name         = "private-google-access-ip"
+  address_type = "INTERNAL"
+  purpose      = "VPC_PEERING"
+  prefix_length = 24
+  network      = google_compute_network.test_vpc_network.id
+  # address      = var.computeGlobalAddress
+  depends_on = [google_compute_network.test_vpc_network]
+}
+
+resource "google_service_networking_connection" "default" {
+  network                 = google_compute_network.test_vpc_network.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.default.name]
+  depends_on = [google_compute_global_address.default]
+}
+
+resource "google_sql_database_instance" "cloudsql_instance" {
+  name             = "your-cloudsql-instance-name"
+  project          = var.project_id
+  region           = var.region
+  database_version = "MYSQL_8_0"
+
+  settings {
+    tier = "db-custom-1-3840"
+    disk_size = var.disk_size
+    disk_type = var.disk_type
+    availability_type = var.availability_type
+    ip_configuration {
+      ipv4_enabled    = var.ipv4_enabled
+      private_network = google_compute_network.test_vpc_network.id
+    }
+    backup_configuration {
+      enabled = true
+      binary_log_enabled = true
+    }
+  }
+  deletion_protection = var.deletion_protection
+
+  depends_on = [google_compute_global_address.default, google_service_networking_connection.default]
+}
+
+resource "google_sql_database" "testdb" {
+  name     = "webapp"
+  instance = google_sql_database_instance.cloudsql_instance.name
+  depends_on = [google_sql_database_instance.cloudsql_instance]
+}
+
+resource "google_sql_user" "test_user" {
+  name     = join("-", ["test",random_string.user_name.result])
+  instance = google_sql_database_instance.cloudsql_instance.name
+  password = random_password.password.result
+  depends_on = [google_sql_database_instance.cloudsql_instance]
+}
 
 module "compute" {
   source = "./compute"
+  zone = var.zone
   subnetwork_name = google_compute_subnetwork.webapp_subnet.self_link
+  db_name = google_sql_database.testdb.name
+  db_user = google_sql_user.test_user.name
+  db_password = google_sql_user.test_user.password
+  db_ip = google_sql_database_instance.cloudsql_instance.private_ip_address
+  depends_on = [google_sql_user.test_user, google_sql_database.testdb, google_sql_database_instance.cloudsql_instance]
 }
 

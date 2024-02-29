@@ -1,18 +1,28 @@
-# resource "google_project_service" "compute" {
-#   project = var.project_id
-#   service = "compute.googleapis.com"
-
-#   timeouts {
-#     create = "30m"
-#     update = "40m"
-#   }
-
-#   disable_dependent_services = true
-# }
 
 variable "subnetwork_name" {
   description = "Subnet name"
 }
+
+variable "db_name" {
+  description = "Database name" 
+}
+
+variable "db_user" {
+  description = "Database user"
+}
+
+variable "db_password" {
+  description = "Database password"
+}  
+
+variable "db_ip" {
+ description = "Database IP"
+}
+
+variable "zone" {
+  description = "zone"
+}
+
 
 resource "google_compute_instance" "instance-20240221-210326" {
   boot_disk {
@@ -65,6 +75,21 @@ resource "google_compute_instance" "instance-20240221-210326" {
   #   enable_vtpm                 = true
   # }
 
-  zone = "us-east4-a"
+  metadata = {
+    startup-script = <<-EOT
+    #!/bin/bash
+    cat <<EOF > /opt/csye6225/app/.env
+    DATABASE=${var.db_name}
+    USERNAME=${var.db_user}
+    PASSWORD=${var.db_password}
+    HOST=${var.db_ip}
+    EOF
+    chown csye6225:csye6225 /opt/csye6225/app/.env
+
+    EOT
+  }
+
+  zone = var.zone
+
   allow_stopping_for_update = true
 }
