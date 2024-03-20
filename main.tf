@@ -1,20 +1,19 @@
 
 provider "google" {
-  # credentials = file(var.credentials_file)
-  credentials = var.credentials_file
+  credentials = file(var.credentials_file)
+  # credentials = var.credentials_file
   project     = var.project_id
   region      = var.region
 }
 
 
 resource "random_password" "password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  length           = 8
+  special          = false
 }
 
 resource "random_string" "user_name" {
-  length           = 16
+  length           = 6
   special          = false
 }
 
@@ -126,6 +125,29 @@ resource "google_sql_user" "test_user" {
   depends_on = [google_sql_database_instance.cloudsql_instance]
 }
 
+resource "google_service_account" "logging_service_account" {
+  account_id   = "logging-service-account"
+  display_name = "Logging Service Account"
+}
+
+resource "google_project_iam_binding" "logging_admin_binding" {
+  project = var.project_id
+  role    = "roles/logging.admin"
+  members = [
+    "serviceAccount:${google_service_account.logging_service_account.email}",
+  ]
+  depends_on = [google_service_account.logging_service_account]
+}
+
+resource "google_project_iam_binding" "metric_writer_binding" {
+  project = var.project_id
+  role    = "roles/monitoring.metricWriter"
+  members = [
+    "serviceAccount:${google_service_account.logging_service_account.email}",
+  ]
+  depends_on = [google_project_iam_binding.logging_admin_binding]
+}
+
 module "compute" {
   source = "./compute"
   zone = var.zone
@@ -134,6 +156,31 @@ module "compute" {
   db_user = google_sql_user.test_user.name
   db_password = google_sql_user.test_user.password
   db_ip = google_sql_database_instance.cloudsql_instance.private_ip_address
-  depends_on = [google_sql_user.test_user, google_sql_database.testdb, google_sql_database_instance.cloudsql_instance]
+  service_account = google_service_account.logging_service_account.email
+  depends_on = [google_sql_user.test_user, google_sql_database.testdb, google_sql_database_instance.cloudsql_instance,
+    google_project_iam_binding.metric_writer_binding]
 }
+
+locals {
+  vm_ip_address = module.compute.vm_ip_address
+  depends_on = [module.compute]
+}
+
+# resource "google_dns_managed_zone" "my_zone" {
+#   name        = "my-zone"
+#   dns_name    = "paracloud.site."
+#   description = "Managed by Terraform"
+#   depends_on = [module.compute]
+# }
+
+resource "google_dns_record_set" "my_record" {
+  name    = "paracloud.site."
+  type    = "A"
+  ttl     = 300
+  managed_zone = "sangeet-dns-zone"
+  rrdatas = [local.vm_ip_address]
+  depends_on =  [module.compute]
+}
+
+
 
