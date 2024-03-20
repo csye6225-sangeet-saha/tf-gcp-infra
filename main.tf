@@ -183,4 +183,3 @@ resource "google_dns_record_set" "my_record" {
 }
 
 
-
