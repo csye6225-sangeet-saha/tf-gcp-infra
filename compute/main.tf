@@ -35,7 +35,7 @@ resource "google_compute_instance" "instance-20240221-210326" {
 
     initialize_params {
       # image = "projects/debian-cloud/global/images/debian-12-bookworm-v20240213"
-      image = "projects/csye-6225-dev-415015/global/images/mysql-node-custom-image"
+      image = "projects/csye-6225-dev-415015/global/images/mysql-node-custom-image-2"
       
       type  = "pd-balanced"
     }
@@ -72,7 +72,7 @@ resource "google_compute_instance" "instance-20240221-210326" {
     # email  = "sangeet-dev@csye-6225-dev-415015.iam.gserviceaccount.com"
     # scopes = ["https://www.googleapis.com/auth/cloud-platform"]
     email = var.service_account
-    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    scopes = ["https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/pubsub"]
   }
 
   # shielded_instance_config {
@@ -92,6 +92,8 @@ resource "google_compute_instance" "instance-20240221-210326" {
     EOF
 
     chown csye6225:csye6225 /opt/csye6225/app/.env
+
+    EOF
 
     EOT
   }

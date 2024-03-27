@@ -1,7 +1,7 @@
 
 provider "google" {
-  # credentials = file(var.credentials_file)
-  credentials = var.credentials_file
+  credentials = file(var.credentials_file)
+  # credentials = var.credentials_file
   project     = var.project_id
   region      = var.region
 }
@@ -148,6 +148,15 @@ resource "google_project_iam_binding" "metric_writer_binding" {
   depends_on = [google_project_iam_binding.logging_admin_binding]
 }
 
+resource "google_project_iam_binding" "pubsub_publisher_binding" {
+  project = var.project_id
+  role    = "roles/pubsub.publisher"
+  members = [
+    "serviceAccount:${google_service_account.logging_service_account.email}",
+  ]
+  depends_on = [google_project_iam_binding.metric_writer_binding]
+}
+
 module "compute" {
   source = "./compute"
   zone = var.zone
@@ -181,5 +190,18 @@ resource "google_dns_record_set" "my_record" {
   rrdatas = [local.vm_ip_address]
   depends_on =  [module.compute]
 }
+
+ module cloudFunction{
+  source = "./cloudFunction"
+  project_id = var.project_id
+  vpc_name = google_compute_network.test_vpc_network.name
+  db_name = google_sql_database.testdb.name
+  db_user = google_sql_user.test_user.name
+  db_password = google_sql_user.test_user.password
+  db_ip = google_sql_database_instance.cloudsql_instance.private_ip_address
+  sendgrid_key = var.sendgrid_key
+  region = var.region
+  depends_on = [google_sql_user.test_user,module.compute]
+ }
 
 
