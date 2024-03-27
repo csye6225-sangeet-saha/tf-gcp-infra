@@ -26,10 +26,10 @@ jobs:
     - name: Terraform Validate
       run: terraform validate
 
-    - name: Terraform Plan
-      run: terraform plan -var="credentials_file=${CREDENTIALS}"
+    # - name: Terraform Plan
+    #   run: terraform plan -var="credentials_file=${CREDENTIALS}"
 
-    - name: Terraform Apply
-      run: terraform apply -var="credentials_file=${CREDENTIALS}"
-      env:
-        TF_CLI_ARGS: "-auto-approve"
+    # - name: Terraform Apply
+    #   run: terraform apply -var="credentials_file=${CREDENTIALS}"
+    #   env:
+    #     TF_CLI_ARGS: "-auto-approve"

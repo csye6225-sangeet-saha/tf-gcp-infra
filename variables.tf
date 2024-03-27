@@ -84,6 +84,10 @@ variable "deletion_protection"{
     default = false
 }
 
+variable "sendgrid_key"{
+    description = "sendgrid key"
+}
+
 
 
 
