@@ -106,8 +106,8 @@ resource "google_compute_region_autoscaler" "web_autoscaler" {
   # zone             = var.zone
 
   autoscaling_policy {
-    max_replicas    = 10
-    min_replicas    = 1
+    max_replicas    = 6
+    min_replicas    = 3
     cooldown_period = 150
 
     cpu_utilization {
