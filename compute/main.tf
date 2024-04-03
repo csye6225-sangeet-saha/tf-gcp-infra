@@ -42,6 +42,7 @@ resource "google_compute_region_instance_template" "web_instance_template" {
     access_config {
       network_tier = "PREMIUM"
     }
+
   }
 
   metadata = {
