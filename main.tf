@@ -59,7 +59,7 @@ resource "google_compute_firewall" "webapp_firewall" {
   name    = "webapp-firewall"
   network = google_compute_network.test_vpc_network.name
   direction      = "INGRESS"
-  source_ranges  = ["0.0.0.0/0"]
+  source_ranges  = [local.lb_ip_address,"130.211.0.0/22", "35.191.0.0/16"]
 
   allow {
     protocol = "tcp"
@@ -171,7 +171,7 @@ module "compute" {
 }
 
 locals {
-  vm_ip_address = module.compute.vm_ip_address
+  lb_ip_address = module.compute.load_balancer_ip
   depends_on = [module.compute]
 }
 
@@ -187,7 +187,7 @@ resource "google_dns_record_set" "my_record" {
   type    = "A"
   ttl     = 300
   managed_zone = "sangeet-dns-zone"
-  rrdatas = [local.vm_ip_address]
+  rrdatas = [local.lb_ip_address]
   depends_on =  [module.compute]
 }
 
