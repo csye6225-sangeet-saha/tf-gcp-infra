@@ -27,59 +27,22 @@ variable service_account {
   description = "Service account name"
 }
 
-
-resource "google_compute_instance" "instance-20240221-210326" {
-  boot_disk {
-    auto_delete = true
-    device_name = "instance-20240221-210326"
-
-    initialize_params {
-      # image = "projects/debian-cloud/global/images/debian-12-bookworm-v20240213"
-      image = "projects/csye-6225-dev-415015/global/images/mysql-node-custom-image-2"
-      
-      type  = "pd-balanced"
-    }
-
-    mode = "READ_WRITE"
+resource "google_compute_region_instance_template" "web_instance_template" {
+  name = "web-instance-template"
+  
+  disk {
+    source_image = "projects/csye-6225-dev-415015/global/images/mysql-node-custom-image-2"
+    type  = "pd-balanced"
   }
 
-  labels = {
-    goog-ec-src = "vm_add-tf"
-  }
-
-  machine_type = "e2-standard-4"
-  name         = "instance-20240221-210326"
-  project      = "csye-6225-dev-415015"
-
+  machine_type = "e2-small"
+  
   network_interface {
+    subnetwork = var.subnetwork_name
     access_config {
       network_tier = "PREMIUM"
     }
-
-    # queue_count = 0
-    # stack_type  = "IPV4_ONLY"
-    subnetwork  = var.subnetwork_name
   }
-
-  # scheduling {
-  #   automatic_restart   = true
-  #   on_host_maintenance = "MIGRATE"
-  #   preemptible         = false
-  #   provisioning_model  = "STANDARD"
-  # }
-
-  service_account {
-    # email  = "sangeet-dev@csye-6225-dev-415015.iam.gserviceaccount.com"
-    # scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-    email = var.service_account
-    scopes = ["https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/pubsub"]
-  }
-
-  # shielded_instance_config {
-  #   enable_integrity_monitoring = true
-  #   enable_secure_boot          = false
-  #   enable_vtpm                 = true
-  # }
 
   metadata = {
     startup-script = <<-EOT
@@ -92,53 +55,114 @@ resource "google_compute_instance" "instance-20240221-210326" {
     EOF
 
     chown csye6225:csye6225 /opt/csye6225/app/.env
-
     EOF
-
     EOT
   }
 
-  # cat << EOF > /etc/google-cloud-ops-agent/config.yaml
-  #   logging:
-  #     receivers:
-  #       my-app-receiver:
-  #         type: files
-  #         include_paths:
-  #           - /var/log/webapp/application.log
-  #         record_log_file_path: true
-  #     processors:
-  #       my-app-processor:
-  #         type: parse_json
-  #         time_key: time
-  #         time_format: "%Y-%m-%dT%H:%M:%S.%L%Z"
-  #       move_severity:
-  #         type: modify_fields
-  #         fields:
-  #           severity:
-  #             move_from: jsonPayload.level
-  #             map_values:
-  #               INFO: "info"
-  #               ERROR: "error"
-  #               WARNING: "warn"
-  #               DEBUG: "debug"
-          
-  #     service:
-  #       pipelines:
-  #         default_pipeline:
-  #           receivers: [my-app-receiver]
-  #           processors: [my-app-processor,move_severity]
-  #   EOF
+  service_account {
+    email  = var.service_account
+    scopes = ["https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/pubsub"]
+  }
 
-  #   sudo systemctl restart google-cloud-ops-agent
-
-  zone = var.zone
-
-  allow_stopping_for_update = true
-
+  labels = {
+    goog-ec-src = "vm_add-tf"
+  }
 }
 
-output "vm_ip_address" {
-    description = "VM Internal IP Address"
-    value = google_compute_instance.instance-20240221-210326.network_interface[0].access_config[0].nat_ip
-    depends_on = [google_compute_instance.instance-20240221-210326]
+resource "google_compute_http_health_check" "web_health_check" {
+  name               = "web-health-check"
+  check_interval_sec = 15
+  timeout_sec        = 15
+  port               = 8080
+  request_path       = "/healthz"
+}
+
+resource "google_compute_region_instance_group_manager" "web_instance_group_manager" {
+  name             = "web-instance-group-manager"
+  base_instance_name = "web-instance"
+  target_size      = 1
+  # zone             = var.zone
+
+  version {
+    name         = "instance-template"
+    instance_template = google_compute_region_instance_template.web_instance_template.self_link
   }
+
+  auto_healing_policies {
+    health_check = google_compute_http_health_check.web_health_check.self_link
+    initial_delay_sec = 60
+  }
+
+  named_port {
+    name = "http"
+    port = 8080
+  }
+}
+
+resource "google_compute_region_autoscaler" "web_autoscaler" {
+  name               = "web-autoscaler"
+  target = google_compute_region_instance_group_manager.web_instance_group_manager.self_link
+  # zone             = var.zone
+
+  autoscaling_policy {
+    max_replicas    = 10
+    min_replicas    = 1
+    cooldown_period = 150
+
+    cpu_utilization {
+      target = 0.05
+    }
+  }
+}
+
+
+
+# output "vm_ip_address" {
+#   description = "VM Internal IP Address"
+#   value       = google_compute_instance_group_manager.web_instance_group_manager.instance_group.network_interface[0].access_config[0].nat_ip
+# }
+
+resource "google_compute_managed_ssl_certificate" "lb_default" {
+  provider = google
+  name     = "myservice-ssl-cert"
+
+  managed {
+    domains = ["paracloud.site"]
+  }
+}
+
+resource "google_compute_target_https_proxy" "my_proxy" {
+  name    = "my-target-http-proxy"
+  url_map = google_compute_url_map.my_map.self_link
+  ssl_certificates = [google_compute_managed_ssl_certificate.lb_default.self_link]
+}
+
+
+resource "google_compute_global_forwarding_rule" "my_lb" {
+  name       = "my-load-balancer"
+  target     = google_compute_target_https_proxy.my_proxy.self_link
+  port_range = "443"
+}
+
+resource "google_compute_url_map" "my_map" {
+  name            = "my-url-map"
+  default_service = google_compute_backend_service.my_service.self_link
+}
+
+resource "google_compute_backend_service" "my_service" {
+  name             = "my-backend-service"
+  health_checks    = [google_compute_http_health_check.web_health_check.self_link]
+  protocol         = "HTTP"
+  timeout_sec      = 10
+
+  backend {
+    group = google_compute_region_instance_group_manager.web_instance_group_manager.instance_group
+  }
+}
+
+
+output "load_balancer_ip" {
+  description = "Load Balancer IP Address"
+  value       = google_compute_global_forwarding_rule.my_lb.ip_address
+  depends_on = [google_compute_global_forwarding_rule.my_lb]
+}
