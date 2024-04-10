@@ -10,7 +10,7 @@ variable "credentials_file" {
 
 variable "region" {
     description = "GCP region"
-    default     = "us-east4"
+    default     = "us-east1"
 }
 
 variable "vpc_name"{
@@ -51,7 +51,7 @@ variable "computeGlobalAddress"{
 #variable for zone
 variable "zone"{
     description = "zone"
-    default = "us-east4-a"
+    default = "us-east1-b"
 }
 
 variable "disk_size"{

@@ -28,7 +28,7 @@ variable "sendgrid_key" {
 
 variable "region" {
     description = "Region"
-    default = "us-east4"
+    default = "us-east1"
 }
 
 resource "google_service_account" "cloud_function_service_account" {
@@ -100,7 +100,7 @@ resource "google_cloudfunctions2_function" "user_mail_verification" {
     }
     source {
       storage_source {
-        bucket = "mail_function"
+        bucket = "my-bucket-name-para-22339341"
         object = "function-source.zip"
       }
     }
@@ -128,7 +128,7 @@ resource "google_cloudfunctions2_function" "user_mail_verification" {
   }
 
   event_trigger {
-    trigger_region = "us-central1"
+    trigger_region = "us-east1"
     event_type = "google.cloud.pubsub.topic.v1.messagePublished"
     pubsub_topic = google_pubsub_topic.sendemail.id
     retry_policy = "RETRY_POLICY_RETRY"
