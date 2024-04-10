@@ -27,15 +27,22 @@ variable service_account {
   description = "Service account name"
 }
 
+variable "vm_kms_key"{
+  description = "vm_kms_key"
+}
+
 resource "google_compute_region_instance_template" "web_instance_template" {
   name = "web-instance-template"
   
   disk {
     source_image = "projects/csye-6225-dev-415015/global/images/mysql-node-custom-image-2"
     type  = "pd-balanced"
+    disk_encryption_key {
+      kms_key_self_link = var.vm_kms_key.id
+    }
   }
 
-  machine_type = "e2-small"
+  machine_type = "e2-medium"
   
   network_interface {
     subnetwork = var.subnetwork_name
@@ -72,7 +79,7 @@ resource "google_compute_region_instance_template" "web_instance_template" {
 
 resource "google_compute_http_health_check" "web_health_check" {
   name               = "web-health-check"
-  check_interval_sec = 15
+  check_interval_sec = 30
   timeout_sec        = 15
   port               = 8080
   request_path       = "/healthz"
@@ -106,12 +113,12 @@ resource "google_compute_region_autoscaler" "web_autoscaler" {
   # zone             = var.zone
 
   autoscaling_policy {
-    max_replicas    = 6
-    min_replicas    = 3
+    max_replicas    = 3
+    min_replicas    = 1
     cooldown_period = 150
 
     cpu_utilization {
-      target = 0.05
+      target = 0.15
     }
   }
 }
@@ -170,3 +177,4 @@ output "load_balancer_ip" {
   value       = google_compute_global_forwarding_rule.my_lb.ip_address
   depends_on = [google_compute_global_forwarding_rule.my_lb]
 }
+

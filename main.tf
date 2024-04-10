@@ -107,9 +107,10 @@ resource "google_sql_database_instance" "cloudsql_instance" {
       binary_log_enabled = true
     }
   }
+  encryption_key_name = module.keyring.sql_kms_key.id
   deletion_protection = var.deletion_protection
 
-  depends_on = [google_compute_global_address.default, google_service_networking_connection.default]
+  depends_on = [google_compute_global_address.default, google_service_networking_connection.default,module.keyring]
 }
 
 resource "google_sql_database" "testdb" {
@@ -166,8 +167,9 @@ module "compute" {
   db_password = google_sql_user.test_user.password
   db_ip = google_sql_database_instance.cloudsql_instance.private_ip_address
   service_account = google_service_account.logging_service_account.email
+  vm_kms_key = module.keyring.vm_kms_key
   depends_on = [google_sql_user.test_user, google_sql_database.testdb, google_sql_database_instance.cloudsql_instance,
-    google_project_iam_binding.metric_writer_binding]
+    google_project_iam_binding.metric_writer_binding,module.keyring]
 }
 
 locals {
@@ -201,7 +203,37 @@ resource "google_dns_record_set" "my_record" {
   db_ip = google_sql_database_instance.cloudsql_instance.private_ip_address
   sendgrid_key = var.sendgrid_key
   region = var.region
-  depends_on = [google_sql_user.test_user,module.compute]
+  depends_on = [google_sql_user.test_user,module.compute,module.bucket]
  }
+
+ module secrets{
+  source = "./secrets"
+  region = var.region
+  project_id = var.project_id
+  subnetwork_name = google_compute_subnetwork.webapp_subnet.self_link
+  db_name = google_sql_database.testdb.name
+  db_user = google_sql_user.test_user.name
+  db_password = google_sql_user.test_user.password
+  db_ip = google_sql_database_instance.cloudsql_instance.private_ip_address
+  service_account = google_service_account.logging_service_account.email
+  depends_on = [google_sql_user.test_user, google_sql_database.testdb, google_sql_database_instance.cloudsql_instance,
+    google_project_iam_binding.metric_writer_binding]
+ }
+
+ module keyring {
+  source = "./keyring"
+  region = var.region
+  project_id = var.project_id
+ }
+
+
+ module bucket{
+  source = "./bucket"
+  region = var.region
+  storage_kms_key = module.keyring.storage_kms_key
+  depends_on = [module.keyring]
+}
+
+ 
 
 
